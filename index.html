@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智简简历 - AI简历生成器</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --primary: #2563eb; --primary-light: #3b82f6; --bg: #f8fafc; --card: #fff; --text: #1e293b; --text-light: #64748b; --border: #e2e8f0; --success: #10b981; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* Header */
+.header { background: linear-gradient(135deg, #1e40af, #3b82f6); color: white; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+.header h1 { font-size: 1.5rem; font-weight: 700; }
+.header p { font-size: 0.85rem; opacity: 0.8; }
+
+/* Layout */
+.main { display: flex; height: calc(100vh - 70px); }
+.panel-left { width: 420px; overflow-y: auto; padding: 1.5rem; border-right: 1px solid var(--border); background: var(--card); }
+.panel-right { flex: 1; overflow-y: auto; padding: 2rem; display: flex; justify-content: center; align-items: flex-start; background: #e2e8f0; }
+
+/* Form */
+.section { margin-bottom: 1.5rem; }
+.section-title { font-size: 0.9rem; font-weight: 600; color: var(--primary); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+.section-title .arrow { transition: transform 0.2s; font-size: 0.7rem; }
+.section-title.collapsed .arrow { transform: rotate(-90deg); }
+.section-body { transition: max-height 0.3s; overflow: hidden; }
+.row { display: flex; gap: 0.75rem; margin-bottom: 0.75rem; }
+.row > * { flex: 1; }
+label { display: block; font-size: 0.78rem; color: var(--text-light); margin-bottom: 0.25rem; }
+input, textarea, select { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; transition: border-color 0.2s; font-family: inherit; }
+input:focus, textarea:focus { outline: none; border-color: var(--primary); }
+textarea { resize: vertical; min-height: 60px; }
+
+/* Experience entries */
+.entry { border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.75rem; position: relative; background: #f8fafc; }
+.entry .remove-btn { position: absolute; top: 0.5rem; right: 0.5rem; background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1rem; }
+.add-btn { background: none; border: 1px dashed var(--border); border-radius: 6px; padding: 0.5rem; width: 100%; color: var(--primary); cursor: pointer; font-size: 0.85rem; }
+.add-btn:hover { background: #eff6ff; }
+
+/* Template selector */
+.templates { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+.tpl-btn { padding: 0.4rem 0.8rem; border: 1px solid var(--border); border-radius: 6px; background: var(--card); cursor: pointer; font-size: 0.8rem; }
+.tpl-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* Resume Preview */
+.resume-page { width: 210mm; min-height: 297mm; background: white; box-shadow: 0 4px 20px rgba(0,0,0,0.15); padding: 0; font-size: 10pt; line-height: 1.5; }
+.resume-page .page-inner { padding: 40px 48px; }
+
+/* Export bar */
+.export-bar { display: flex; gap: 0.75rem; margin-bottom: 1rem; }
+.export-btn { padding: 0.5rem 1.2rem; border-radius: 6px; border: none; font-size: 0.85rem; cursor: pointer; font-weight: 500; }
+.export-btn.primary { background: var(--primary); color: white; }
+.export-btn.primary:hover { background: var(--primary-light); }
+.export-btn.secondary { background: white; color: var(--text); border: 1px solid var(--border); }
+
+/* ====== TEMPLATE: Classic ====== */
+.tpl-classic .r-header { text-align: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #1e293b; }
+.tpl-classic .r-name { font-size: 24pt; font-weight: 700; color: #0f172a; letter-spacing: 4px; margin-bottom: 4px; }
+.tpl-classic .r-title { font-size: 11pt; color: #64748b; margin-bottom: 8px; }
+.tpl-classic .r-contact { font-size: 9pt; color: #64748b; display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+.tpl-classic .r-section { margin-bottom: 16px; }
+.tpl-classic .r-section-title { font-size: 11pt; font-weight: 700; color: #1e293b; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; margin-bottom: 8px; letter-spacing: 2px; }
+.tpl-classic .r-item { margin-bottom: 10px; }
+.tpl-classic .r-item-header { display: flex; justify-content: space-between; align-items: baseline; }
+.tpl-classic .r-item-title { font-weight: 600; font-size: 10pt; }
+.tpl-classic .r-item-date { font-size: 9pt; color: #64748b; }
+.tpl-classic .r-item-sub { font-size: 9pt; color: #475569; }
+.tpl-classic .r-item-desc { font-size: 9pt; color: #475569; margin-top: 2px; }
+.tpl-classic .r-skills { display: flex; flex-wrap: wrap; gap: 8px; }
+.tpl-classic .r-skill-tag { background: #f1f5f9; padding: 2px 10px; border-radius: 3px; font-size: 9pt; }
+.tpl-classic .r-summary { font-size: 9.5pt; color: #475569; text-align: justify; }
+
+/* ====== TEMPLATE: Modern ====== */
+.tpl-modern .r-header { display: flex; gap: 24px; margin-bottom: 20px; }
+.tpl-modern .r-header-left { flex: 1; }
+.tpl-modern .r-name { font-size: 22pt; font-weight: 800; color: #0f172a; }
+.tpl-modern .r-title { font-size: 10pt; color: var(--primary); margin-top: 4px; font-weight: 500; }
+.tpl-modern .r-header-right { display: flex; flex-direction: column; gap: 4px; padding-top: 4px; font-size: 9pt; color: #64748b; text-align: right; min-width: 160px; }
+.tpl-modern .r-section { margin-bottom: 16px; }
+.tpl-modern .r-section-title { font-size: 10pt; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; position: relative; padding-left: 12px; }
+.tpl-modern .r-section-title::before { content: ''; position: absolute; left: 0; top: 2px; bottom: 2px; width: 3px; background: var(--primary); border-radius: 2px; }
+.tpl-modern .r-item { margin-bottom: 10px; padding-left: 12px; }
+.tpl-modern .r-item-header { display: flex; justify-content: space-between; align-items: baseline; }
+.tpl-modern .r-item-title { font-weight: 600; font-size: 10pt; }
+.tpl-modern .r-item-date { font-size: 9pt; color: #94a3b8; }
+.tpl-modern .r-item-sub { font-size: 9pt; color: #64748b; }
+.tpl-modern .r-item-desc { font-size: 9pt; color: #475569; margin-top: 2px; }
+.tpl-modern .r-skills { display: flex; flex-wrap: wrap; gap: 6px; }
+.tpl-modern .r-skill-tag { border: 1px solid var(--primary); color: var(--primary); padding: 2px 10px; border-radius: 12px; font-size: 9pt; }
+.tpl-modern .r-summary { font-size: 9.5pt; color: #475569; }
+
+/* ====== TEMPLATE: Creative ====== */
+.tpl-creative { background: #0f172a; color: #e2e8f0; }
+.tpl-creative .page-inner { padding: 36px 42px; }
+.tpl-creative .r-header { background: linear-gradient(135deg, #3b82f6, #8b5cf6); margin: -36px -42px 20px; padding: 32px 42px; }
+.tpl-creative .r-name { font-size: 26pt; font-weight: 800; color: white; letter-spacing: 2px; }
+.tpl-creative .r-title { font-size: 11pt; color: rgba(255,255,255,0.8); margin-top: 4px; }
+.tpl-creative .r-contact { font-size: 9pt; color: rgba(255,255,255,0.7); margin-top: 8px; display: flex; gap: 16px; flex-wrap: wrap; }
+.tpl-creative .r-section { margin-bottom: 14px; }
+.tpl-creative .r-section-title { font-size: 10pt; font-weight: 700; color: #8b5cf6; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 8px; }
+.tpl-creative .r-item { margin-bottom: 10px; }
+.tpl-creative .r-item-header { display: flex; justify-content: space-between; align-items: baseline; }
+.tpl-creative .r-item-title { font-weight: 600; font-size: 10pt; color: white; }
+.tpl-creative .r-item-date { font-size: 9pt; color: #94a3b8; }
+.tpl-creative .r-item-sub { font-size: 9pt; color: #94a3b8; }
+.tpl-creative .r-item-desc { font-size: 9pt; color: #cbd5e1; margin-top: 2px; }
+.tpl-creative .r-skills { display: flex; flex-wrap: wrap; gap: 6px; }
+.tpl-creative .r-skill-tag { background: rgba(139,92,246,0.2); color: #a78bfa; padding: 2px 10px; border-radius: 12px; font-size: 9pt; }
+.tpl-creative .r-summary { font-size: 9.5pt; color: #cbd5e1; }
+
+/* Mobile */
+@media (max-width: 900px) {
+  .main { flex-direction: column; height: auto; }
+  .panel-left { width: 100%; border-right: none; border-bottom: 1px solid var(--border); max-height: 50vh; }
+  .panel-right { padding: 1rem; min-height: 50vh; }
+  .resume-page { width: 100%; min-height: auto; font-size: 8pt; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>📋 智简简历</h1>
+    <p>在线简历生成器 · 填写信息，一键导出精美简历</p>
+  </div>
+</div>
+
+<div class="main">
+  <!-- Left Panel: Form -->
+  <div class="panel-left" id="formPanel">
+    <!-- Basic Info -->
+    <div class="section">
+      <div class="section-title" onclick="toggleSection(this)"><span class="arrow">▼</span> 基本信息</div>
+      <div class="section-body">
+        <div class="row">
+          <div><label>姓名</label><input id="name" placeholder="张三" oninput="render()"></div>
+          <div><label>目标职位</label><input id="title" placeholder="前端工程师" oninput="render()"></div>
+        </div>
+        <div class="row">
+          <div><label>手机</label><input id="phone" placeholder="138-0000-0000" oninput="render()"></div>
+          <div><label>邮箱</label><input id="email" placeholder="abc@example.com" oninput="render()"></div>
+        </div>
+        <div class="row">
+          <div><label>所在城市</label><input id="city" placeholder="北京" oninput="render()"></div>
+          <div><label>个人网站/GitHub</label><input id="website" placeholder="github.com/zhangsan" oninput="render()"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="section">
+      <div class="section-title" onclick="toggleSection(this)"><span class="arrow">▼</span> 个人简介</div>
+      <div class="section-body">
+        <textarea id="summary" rows="3" placeholder="简要介绍你的职业背景、核心优势和工作方向..." oninput="render()"></textarea>
+      </div>
+    </div>
+
+    <!-- Education -->
+    <div class="section">
+      <div class="section-title" onclick="toggleSection(this)"><span class="arrow">▼</span> 教育经历</div>
+      <div class="section-body" id="eduEntries">
+        <div class="entry">
+          <div class="row"><div><label>学校</label><input class="edu-school" placeholder="XX大学" oninput="render()"></div><div><label>专业</label><input class="edu-major" placeholder="计算机科学" oninput="render()"></div></div>
+          <div class="row"><div><label>学历</label><select class="edu-degree" onchange="render()"><option value="本科">本科</option><option value="硕士">硕士</option><option value="博士">博士</option><option value="大专">大专</option></select></div><div><label>时间</label><input class="edu-date" placeholder="2018.09 - 2022.06" oninput="render()"></div></div>
+        </div>
+      </div>
+      <button class="add-btn" onclick="addEdu()">+ 添加教育经历</button>
+    </div>
+
+    <!-- Work Experience -->
+    <div class="section">
+      <div class="section-title" onclick="toggleSection(this)"><span class="arrow">▼</span> 工作经历</div>
+      <div class="section-body" id="workEntries"></div>
+      <button class="add-btn" onclick="addWork()">+ 添加工作经历</button>
+    </div>
+
+    <!-- Project Experience -->
+    <div class="section">
+      <div class="section-title" onclick="toggleSection(this)"><span class="arrow">▼</span> 项目经历</div>
+      <div class="section-body" id="projEntries"></div>
+      <button class="add-btn" onclick="addProj()">+ 添加项目经历</button>
+    </div>
+
+    <!-- Skills -->
+    <div class="section">
+      <div class="section-title" onclick="toggleSection(this)"><span class="arrow">▼</span> 技能特长</div>
+      <div class="section-body">
+        <textarea id="skills" rows="2" placeholder="每行一个技能，如：JavaScript, React, Node.js, Python..." oninput="render()"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Panel: Preview -->
+  <div class="panel-right">
+    <div style="width:100%;max-width:220mm;">
+      <div class="export-bar">
+        <button class="export-btn secondary" onclick="changeTemplate('classic')" id="tplBtnClassic">经典模板</button>
+        <button class="export-btn secondary" onclick="changeTemplate('modern')" id="tplBtnModern">现代模板</button>
+        <button class="export-btn secondary" onclick="changeTemplate('creative')" id="tplBtnCreative">创意模板</button>
+        <div style="flex:1"></div>
+        <button class="export-btn primary" onclick="exportPDF()">📥 导出 PDF</button>
+      </div>
+      <div class="resume-page" id="resume">
+        <div class="page-inner" id="resumeInner"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentTemplate = 'classic';
+
+function toggleSection(el) {
+  el.classList.toggle('collapsed');
+  const body = el.nextElementSibling;
+  body.style.maxHeight = el.classList.contains('collapsed') ? '0' : body.scrollHeight + 'px';
+}
+
+function changeTemplate(tpl) {
+  currentTemplate = tpl;
+  document.getElementById('resume').className = 'resume-page tpl-' + tpl;
+  document.querySelectorAll('.export-btn.secondary').forEach(b => b.classList.remove('primary'));
+  document.getElementById('tplBtn' + tpl.charAt(0).toUpperCase() + tpl.slice(1)).classList.add('primary');
+  render();
+}
+
+function v(id) { return document.getElementById(id).value.trim(); }
+
+function getEntries(containerId, fields) {
+  const entries = [];
+  document.querySelectorAll('#' + containerId + ' .entry').forEach(entry => {
+    const data = {};
+    fields.forEach(f => { data[f] = (entry.querySelector('.' + f) || {}).value?.trim() || ''; });
+    entries.push(data);
+  });
+  return entries;
+}
+
+function addEdu() {
+  const container = document.getElementById('eduEntries');
+  const div = document.createElement('div');
+  div.className = 'entry';
+  div.innerHTML = `<button class="remove-btn" onclick="this.parentElement.remove();render()">×</button>
+    <div class="row"><div><label>学校</label><input class="edu-school" placeholder="XX大学" oninput="render()"></div><div><label>专业</label><input class="edu-major" placeholder="计算机科学" oninput="render()"></div></div>
+    <div class="row"><div><label>学历</label><select class="edu-degree" onchange="render()"><option value="本科">本科</option><option value="硕士">硕士</option><option value="博士">博士</option><option value="大专">大专</option></select></div><div><label>时间</label><input class="edu-date" placeholder="2018.09 - 2022.06" oninput="render()"></div></div>`;
+  container.appendChild(div);
+}
+
+function addWork() {
+  const container = document.getElementById('workEntries');
+  const div = document.createElement('div');
+  div.className = 'entry';
+  div.innerHTML = `<button class="remove-btn" onclick="this.parentElement.remove();render()">×</button>
+    <div class="row"><div><label>公司</label><input class="wk-company" placeholder="XX科技有限公司" oninput="render()"></div><div><label>职位</label><input class="wk-role" placeholder="前端工程师" oninput="render()"></div></div>
+    <div class="row"><div><label>时间</label><input class="wk-date" placeholder="2022.07 - 至今" oninput="render()"></div></div>
+    <label>工作描述</label><textarea class="wk-desc" rows="2" placeholder="描述你的主要工作职责和成果..." oninput="render()"></textarea>`;
+  container.appendChild(div);
+}
+
+function addProj() {
+  const container = document.getElementById('projEntries');
+  const div = document.createElement('div');
+  div.className = 'entry';
+  div.innerHTML = `<button class="remove-btn" onclick="this.parentElement.remove();render()">×</button>
+    <div class="row"><div><label>项目名称</label><input class="pj-name" placeholder="电商后台管理系统" oninput="render()"></div><div><label>时间</label><input class="pj-date" placeholder="2023.01 - 2023.06" oninput="render()"></div></div>
+    <div class="row"><div><label>角色</label><input class="pj-role" placeholder="核心开发" oninput="render()"></div></div>
+    <label>项目描述</label><textarea class="pj-desc" rows="2" placeholder="项目简介、使用的技术栈、你的贡献..." oninput="render()"></textarea>`;
+  container.appendChild(div);
+}
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
+
+function render() {
+  const name = v('name') || '你的姓名';
+  const title = v('title') || '目标职位';
+  const phone = v('phone'), email = v('email'), city = v('city'), website = v('website');
+  const summary = v('summary');
+  const skills = v('skills').split('\n').filter(s=>s.trim());
+
+  const edus = getEntries('eduEntries', ['edu-school','edu-major','edu-degree','edu-date']);
+  const works = getEntries('workEntries', ['wk-company','wk-role','wk-date','wk-desc']);
+  const projs = getEntries('projEntries', ['pj-name','pj-date','pj-role','pj-desc']);
+
+  const contactParts = [phone&&`📱 ${esc(phone)}`, email&&`✉️ ${esc(email)}`, city&&`📍 ${esc(city)}`, website&&`🔗 ${esc(website)}`].filter(Boolean).join('&nbsp;&nbsp;|&nbsp;&nbsp;');
+  const skillTags = skills.map(s=>`<span class="r-skill-tag">${esc(s)}</span>`).join('');
+
+  let eduHTML = edus.filter(e=>e['edu-school']).map(e=>`<div class="r-item"><div class="r-item-header"><span class="r-item-title">${esc(e['edu-school'])} · ${esc(e['edu-major'])}</span><span class="r-item-date">${esc(e['edu-degree'])} · ${esc(e['edu-date'])}</span></div></div>`).join('');
+
+  let workHTML = works.filter(e=>e['wk-company']).map(e=>`<div class="r-item"><div class="r-item-header"><span class="r-item-title">${esc(e['wk-company'])} - ${esc(e['wk-role'])}</span><span class="r-item-date">${esc(e['wk-date'])}</span></div><div class="r-item-desc">${esc(e['wk-desc'])}</div></div>`).join('');
+
+  let projHTML = projs.filter(e=>e['pj-name']).map(e=>`<div class="r-item"><div class="r-item-header"><span class="r-item-title">${esc(e['pj-name'])}</span><span class="r-item-date">${esc(e['pj-role'])} · ${esc(e['pj-date'])}</span></div><div class="r-item-desc">${esc(e['pj-desc'])}</div></div>`).join('');
+
+  let html = '';
+  if (currentTemplate === 'classic') {
+    html = `<div class="r-header"><div class="r-name">${esc(name)}</div><div class="r-title">${esc(title)}</div><div class="r-contact">${contactParts}</div></div>
+    ${summary?`<div class="r-section"><div class="r-section-title">个人简介</div><div class="r-summary">${esc(summary)}</div></div>`:''}
+    ${workHTML?`<div class="r-section"><div class="r-section-title">工作经历</div>${workHTML}</div>`:''}
+    ${projHTML?`<div class="r-section"><div class="r-section-title">项目经历</div>${projHTML}</div>`:''}
+    ${eduHTML?`<div class="r-section"><div class="r-section-title">教育经历</div>${eduHTML}</div>`:''}
+    ${skillTags?`<div class="r-section"><div class="r-section-title">技能特长</div><div class="r-skills">${skillTags}</div></div>`:''}`;
+  } else if (currentTemplate === 'modern') {
+    html = `<div class="r-header"><div class="r-header-left"><div class="r-name">${esc(name)}</div><div class="r-title">${esc(title)}</div></div><div class="r-header-right">${phone?`<div>📱 ${esc(phone)}</div>`:''}${email?`<div>✉️ ${esc(email)}</div>`:''}${city?`<div>📍 ${esc(city)}</div>`:''}${website?`<div>🔗 ${esc(website)}</div>`:''}</div></div>
+    ${summary?`<div class="r-section"><div class="r-section-title">个人简介</div><div class="r-summary">${esc(summary)}</div></div>`:''}
+    ${workHTML?`<div class="r-section"><div class="r-section-title">工作经历</div>${workHTML}</div>`:''}
+    ${projHTML?`<div class="r-section"><div class="r-section-title">项目经历</div>${projHTML}</div>`:''}
+    ${eduHTML?`<div class="r-section"><div class="r-section-title">教育经历</div>${eduHTML}</div>`:''}
+    ${skillTags?`<div class="r-section"><div class="r-section-title">技能特长</div><div class="r-skills">${skillTags}</div></div>`:''}`;
+  } else {
+    html = `<div class="r-header"><div class="r-name">${esc(name)}</div><div class="r-title">${esc(title)}</div><div class="r-contact">${contactParts}</div></div>
+    ${summary?`<div class="r-section"><div class="r-section-title">个人简介</div><div class="r-summary">${esc(summary)}</div></div>`:''}
+    ${workHTML?`<div class="r-section"><div class="r-section-title">工作经历</div>${workHTML}</div>`:''}
+    ${projHTML?`<div class="r-section"><div class="r-section-title">项目经历</div>${projHTML}</div>`:''}
+    ${eduHTML?`<div class="r-section"><div class="r-section-title">教育经历</div>${eduHTML}</div>`:''}
+    ${skillTags?`<div class="r-section"><div class="r-section-title">技能特长</div><div class="r-skills">${skillTags}</div></div>`:''}`;
+  }
+
+  document.getElementById('resumeInner').innerHTML = html;
+}
+
+function exportPDF() {
+  const name = v('name') || '简历';
+  const resumeEl = document.getElementById('resume');
+  // Use browser print
+  const style = document.createElement('style');
+  style.id = 'print-style';
+  style.textContent = `@media print { body > *:not(.resume-page) { display: none !important; } .resume-page { box-shadow: none !important; margin: 0 !important; width: 210mm !important; } .panel-right { padding: 0 !important; display: block !important; background: white !important; overflow: visible !important; } .main { height: auto !important; display: block !important; } }`;
+  if (!document.getElementById('print-style')) document.head.appendChild(style);
+  window.print();
+}
+
+// Init
+changeTemplate('classic');
+</script>
+</body>
+</html>
